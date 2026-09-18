@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Data and run outputs are reproducible; do not commit them.
+data/*.parquet
+data/manifest.json
+artifacts/
+*.npz
+*.npy
+*.joblib
+*.onnx
+
+# Keep the small curated attack inputs
+!data/attacks/*.txt

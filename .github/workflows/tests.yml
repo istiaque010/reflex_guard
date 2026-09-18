@@ -1,0 +1,42 @@
+name: tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # Core only: the unit tests deliberately avoid torch and network access,
+      # so CI stays fast and does not depend on the HuggingFace Hub being up.
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy pandas scikit-learn scipy joblib pyarrow pytest ruff
+
+      - name: Lint
+        run: ruff check src scripts tests
+
+      - name: Unit tests
+        run: pytest -q
+
+      - name: Offline demo runs
+        run: python scripts/demo.py --offline
+
+      - name: Synthetic corpus builds with a leakage-free split
+        run: python scripts/build_dataset.py --synthetic --out /tmp/data_ci --scale 0.2
