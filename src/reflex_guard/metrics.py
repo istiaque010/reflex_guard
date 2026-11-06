@@ -167,7 +167,7 @@ def threshold_sweep(
 def f1_optimal_threshold(
     y_true: np.ndarray, scores: np.ndarray, grid: np.ndarray | None = None
 ) -> float:
-    """Threshold maximising F1 (Eq. 11).
+    """Threshold maximising F1 (Eq. 8).
 
     Select this on training/validation folds only. Choosing it on the evaluation
     set and then reporting performance at it yields an in-sample number.

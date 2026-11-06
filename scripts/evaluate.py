@@ -99,7 +99,7 @@ def main() -> None:
     print(table.drop(columns=["tp", "fp", "tn", "fn"]).to_string(index=False))
     table.to_csv(art / "heldout_results.csv", index=False)
 
-    # -------- prevalence analysis for the best-F1 model (paper's Table 9) -----
+    # -------- prevalence analysis for the best-F1 model (paper's Eq. 7 and Fig. 5) -----
     best = table.iloc[0]
     tpr, fpr = float(best.recall), float(best.fpr)
     print(f"\nOperating point of {best.classifier}: TPR={tpr:.3f}, FPR={fpr:.4f}")

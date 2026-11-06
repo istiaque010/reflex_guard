@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Latency benchmark (Table 7): component, end-to-end, and the TAIL.
+"""Latency benchmark (Table 6): component, end-to-end, and the TAIL.
 
 Reports mean, P50, P95 and P99. The tail is the point: for a lightweight
 guardrail the mean flatters the architecture and the P99 does not, and P99 is

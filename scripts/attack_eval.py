@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Attack-family robustness and the threshold sweep (Tables 6, 10, 11).
+"""Attack-family robustness and the threshold sweep (Tables 5 and 7).
 
 Reports, per family, detection at the default and sensitive thresholds, the
 ablation of jailbreak-aware preprocessing, and the benign false-positive rate at
@@ -61,7 +61,7 @@ def main() -> None:
         "Base64": make_base64_attacks(behaviors, n=args.n_b64, seed=args.seed),
         "DrAttack": make_drattack_attacks(behaviors, n=args.n_drattack, seed=args.seed),
     }
-    # The shipped gcg_suffixes.txt is comments only, so test for CONTENT rather
+    # gcg_suffixes.txt holds the paper's 10 GCG-style suffixes; still test for CONTENT rather
     # than for the file's existence.
     gcg_path = Path(args.gcg_suffixes)
     suffixes = load_gcg_suffixes(gcg_path) if gcg_path.exists() else []
@@ -71,7 +71,7 @@ def main() -> None:
     else:
         print(f"NOTE: no GCG suffixes in {gcg_path} - skipping the GCG family.\n"
               f"      Generate them against a surrogate model; see docs/REPRODUCING.md.\n"
-              f"      Do not hand-write suffixes and report the result as GCG.")
+              f"      Report results from fixed suffixes as GCG-style, not as optimised GCG.")
 
     # benign scores for the false-positive column
     test = pd.read_parquet(art / "test.parquet")

@@ -7,7 +7,7 @@ Three pattern families are handled, and they are handled differently on purpose:
   This is the single highest-impact preprocessing step in the paper (Base64
   recall 7% -> 100%).
 * **GCG-style adversarial suffixes** are *detected but deliberately not removed*.
-  Mean pooling attenuates a short high-entropy suffix, and the suffix's presence
+  The [CLS] embedding attenuates a short high-entropy suffix, and the suffix's presence
   is itself weak evidence of an adversarial prompt.
 * **DrAttack-style structural framing** raises a sensitivity flag only. These
   patterns occur in perfectly legitimate prompts, so acting on them alone would

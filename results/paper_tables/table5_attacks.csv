@@ -1,0 +1,4 @@
+attack_family,samples,recall_tau_0.25,recall_tau_0.03,mean_prob,sd_prob
+GCG-style suffix,60,100%,100%,0.79,0.04
+Base64-encoded,100,100%,100%,0.63,0.05
+DrAttack-style scaffolding,60,0%,100%,0.05,0.01

@@ -1,4 +1,10 @@
-"""Corpus construction (Section IV-A).
+"""Corpus construction with the known data issues fixed (an alternative to the paper corpus).
+
+NOTE: this is NOT the corpus used in the paper. The paper corpus is released as
+``data/corpus/reflexguard_corpus.csv`` and its procedure is in ``paper_corpus.py``.
+This module builds a corrected corpus instead: Anthropic red-team attempts only,
+MultiJail Bengali text, and an AlpacaEval-plus-Alpaca benign pool. Results on it are
+not comparable with the paper's tables.
 
 Five public sources. Training harmful data comes from ONE of them (Anthropic
 red-team); the other three harmful sources are evaluation-only, so the reported
@@ -66,7 +72,7 @@ SOURCES = [
     SourceSpec("anthropic_redteam", 1, 13_000, "train", notes="single-turn human openers"),
     SourceSpec("jailbreakhub", 1, 968, "eval", notes="MinHash dedup @ J=0.85"),
     SourceSpec("jailbreakbench", 1, 800, "eval", augmented=True, n_seed=100,
-               notes="back-translation + synonym replacement"),
+               notes="paraphrase expansion (corrected corpus only)"),
     SourceSpec("multijail", 1, 800, "eval", augmented=True, n_seed=315,
                notes="paraphrase oversampling, Bengali subset"),
 ]
@@ -102,10 +108,10 @@ def _subsample(texts: list[str], n: int, seed: int) -> list[str]:
 
 
 # ------------------------------------------------------------------ loaders
-def _hf(name: str, **kwargs):
+def _hf(name: str, *args, **kwargs):
     from datasets import load_dataset
 
-    return load_dataset(name, **kwargs)
+    return load_dataset(name, *args, **kwargs)
 
 
 def _load_anthropic_redteam(target_n: int, seed: int) -> list[str]:
@@ -211,9 +217,9 @@ def _augment(seeds: list[str], target_n: int, seed: int) -> list[str]:
     """Expand *seeds* to *target_n* by light surface paraphrase.
 
     NOTE ON HONESTY: this is a placeholder expansion that varies surface form
-    only. The paper used back-translation and synonym replacement; if you want to
-    reproduce its exact corpus you must substitute a real paraphraser here. Either
-    way the resulting items are correlated with their seed, which is why
+    only, for the corrected corpus. The paper's corpus did not paraphrase: it
+    resampled JailbreakBench and MultiJail with replacement (see paper_corpus.py).
+    Either way the resulting items are correlated with their seed, which is why
     ``n_seed`` is recorded and the intervals are widened downstream.
     """
     if not seeds:

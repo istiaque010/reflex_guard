@@ -1,0 +1,8 @@
+classifier,min_ms,mean_ms,p50_ms,p99_ms
+LightGBM,37.59,54.88,41.71,284.73
+Logistic Regression,37.97,53.17,40.85,325.80
+HistGradientBoosting,44.67,69.81,53.34,463.53
+XGBoost,45.90,85.90,65.60,540.61
+KNN,63.40,88.67,71.81,491.72
+AdaBoost,106.20,116.93,99.52,355.44
+Random Forest,166.94,193.97,181.53,422.88

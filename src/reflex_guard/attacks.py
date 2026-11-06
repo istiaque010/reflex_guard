@@ -1,8 +1,8 @@
-"""Adversarial evaluation sets (Section IV-E).
+"""Adversarial evaluation sets (Section IV-F, Table 5).
 
 Three attack families, each exercising a different evasion mechanism:
 
-* **GCG** - token-level optimisation. A high-entropy suffix is appended to an
+* **GCG-style** - suffix perturbation. A fixed noise suffix is appended to an
   otherwise unmodified harmful instruction. Note that this leaves the harmful
   semantics intact, which is why an embedding classifier finds it easy; a perfect
   score here is a weak result, not a strong one.
@@ -12,9 +12,10 @@ Three attack families, each exercising a different evasion mechanism:
   reassembled inside benign scaffolding, so the harmful signal itself is
   attenuated. This is the family the method fails on.
 
-Generating real GCG suffixes requires gradient access to a surrogate model
-(Vicuna-7B-v1.3 in the paper) and is out of scope for this module. Supply them in
-``data/attacks/gcg_suffixes.txt``, one per line; see ``docs/REPRODUCING.md``.
+The paper uses 10 fixed, manually constructed GCG-style suffixes, shipped in
+``data/attacks/gcg_suffixes.txt``. They were not optimised against a model, so the
+GCG-style family tests the form of GCG suffixes, not optimised GCG attacks. See
+``data/attacks/ATTACK_CONFIGURATION.md``.
 """
 
 from __future__ import annotations

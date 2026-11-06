@@ -1,6 +1,6 @@
 """Dense semantic embedding stage (Section III-B).
 
-BAAI/bge-small-en-v1.5: 33M parameters, 384 dimensions, mean pooling, L2
+BAAI/bge-small-en-v1.5: 33M parameters, 384 dimensions, CLS-token pooling as configured by the model, L2
 normalised onto the unit hypersphere so that downstream similarity is angular.
 
 A note on the instruction prefix. The paper prefixes inputs with ``"query:"``.
@@ -84,7 +84,7 @@ class BGEEmbedder:
         vecs = self.model.encode(
             self._format(items),
             batch_size=batch_size or self.batch_size,
-            normalize_embeddings=True,          # unit hypersphere (Eq. 4)
+            normalize_embeddings=True,          # unit hypersphere (Section III-B)
             convert_to_numpy=True,
             show_progress_bar=show_progress,
         ).astype(np.float32)
