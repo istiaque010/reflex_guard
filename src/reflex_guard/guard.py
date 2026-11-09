@@ -15,13 +15,31 @@ from .preprocessing import JailbreakAwarePreprocessor, PreprocessResult
 
 __all__ = ["Decision", "ReflexGuard"]
 
+# Operating points from the paper (Section IV, Tables 4, 5 and 7).
+# 0.25 is the default: chosen by maximising F1 on cross-validation folds of the
+# training data. 0.03 is the "sensitive" threshold that catches DrAttack-style
+# prompts, at the cost of raising the benign false-positive rate from 6.2% to 11.0%.
 DEFAULT_THRESHOLD = 0.25
 SENSITIVE_THRESHOLD = 0.03
 
 
 @dataclass
 class Decision:
-    """Per-prompt guardrail decision."""
+    """Per-prompt guardrail decision.
+
+    Attributes
+    ----------
+    blocked:
+        True if ``score >= threshold_used``.
+    score:
+        Classifier probability that the prompt is harmful, in [0, 1].
+    threshold_used:
+        The threshold actually applied (the sensitive one if the two-tier
+        policy is on and the structural flag fired).
+    preprocessing:
+        What the preprocessor did and flagged (decoded Base64, GCG-style
+        suffix, structural framing). Useful for logging and auditing.
+    """
 
     blocked: bool
     score: float
@@ -30,6 +48,7 @@ class Decision:
 
     @property
     def action(self) -> str:
+        """``"BLOCK"`` or ``"ALLOW"``, for logs and API responses."""
         return "BLOCK" if self.blocked else "ALLOW"
 
 
@@ -79,6 +98,11 @@ class ReflexGuard:
     # ------------------------------------------------------------- lazy embed
     @property
     def embedder(self) -> BGEEmbedder:
+        """The BGE encoder, loaded on first use.
+
+        Loading is deferred because it imports torch and downloads the model
+        weights; code that only fits on precomputed embeddings never pays for it.
+        """
         if self._embedder is None:
             self._embedder = BGEEmbedder(prefix=self._prefix)
         return self._embedder
@@ -98,6 +122,8 @@ class ReflexGuard:
             X = self.embed_texts(texts, show_progress=True)
         y = np.asarray(y).astype(int)
         if self.classifier_name == "xgboost":
+            # XGBoost has no class_weight option; rebuild it so that
+            # scale_pos_weight matches this training set's class ratio (Table 2).
             self.clf = build_classifier("xgboost", seed=self.seed, y=y)
         self.clf.fit(X, y)
         self._fitted = True
@@ -105,11 +131,17 @@ class ReflexGuard:
 
     # --------------------------------------------------------------- predict
     def score_embeddings(self, X: np.ndarray) -> np.ndarray:
+        """Harm probability for each row of an ``(n, 384)`` embedding matrix."""
         if not self._fitted:
             raise RuntimeError("ReflexGuard is not fitted")
+        # Column 1 of predict_proba is the probability of label 1 (harmful).
         return self.clf.predict_proba(X)[:, 1]
 
     def score(self, texts: list[str] | str, show_progress: bool = False) -> np.ndarray:
+        """Harm probability for one prompt (returns a float) or a list (returns an array).
+
+        Scores only; no threshold is applied. Use :meth:`decide` for a block/allow decision.
+        """
         single = isinstance(texts, str)
         items = [texts] if single else list(texts)
         probs = self.score_embeddings(self.embed_texts(items, show_progress))
@@ -117,13 +149,18 @@ class ReflexGuard:
 
     def decide(self, text: str) -> Decision:
         """Full single-prompt path, including the two-tier threshold if enabled."""
+        # 1. Preprocess: decode Base64 payloads, flag GCG-style suffixes and structural framing.
         pr = self.pre.process(text)
+        # 2. Embed the (possibly decoded) text into a 384-d unit vector.
         vec = self.embedder.encode([pr.text])
+        # 3. Classify: probability that the prompt is harmful.
         prob = float(self.score_embeddings(vec)[0])
+        # 4. Threshold: the sensitive tau applies only when two-tier is on AND the flag fired.
         tau = self.sensitive_threshold if (self.two_tier and pr.structural_flag) else self.threshold
         return Decision(blocked=prob >= tau, score=prob, threshold_used=tau, preprocessing=pr)
 
     def decide_batch(self, texts: list[str]) -> list[Decision]:
+        """Same as :meth:`decide` for many prompts, embedding them in one batch (faster)."""
         results = self.pre.process_batch(texts)
         vecs = self.embedder.encode([r.text for r in results])
         probs = self.score_embeddings(vecs)
@@ -135,6 +172,12 @@ class ReflexGuard:
 
     # ------------------------------------------------------------ persistence
     def save(self, directory: str | Path) -> None:
+        """Write ``classifier.joblib`` and ``config.json`` to *directory*.
+
+        The encoder weights are not saved. :meth:`load` uses the default BGE
+        encoder (fetched from the HuggingFace Hub on first use) unless you pass
+        your own ``embedder``.
+        """
         d = Path(directory)
         d.mkdir(parents=True, exist_ok=True)
         joblib.dump(self.clf, d / "classifier.joblib")
@@ -156,6 +199,11 @@ class ReflexGuard:
 
     @classmethod
     def load(cls, directory: str | Path, embedder: BGEEmbedder | None = None) -> ReflexGuard:
+        """Load a guard written by :meth:`save` (for example ``artifacts/hist_gradient_boosting``).
+
+        Only load directories you trust: ``classifier.joblib`` is a pickle and
+        can execute code when it is opened.
+        """
         d = Path(directory)
         cfg = json.loads((d / "config.json").read_text(encoding="utf-8"))
         guard = cls(

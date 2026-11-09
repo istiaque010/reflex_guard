@@ -65,9 +65,11 @@ class BGEEmbedder:
 
     @property
     def dim(self) -> int:
+        """Embedding size (384 for the default model)."""
         return int(self.model.get_sentence_embedding_dimension())
 
     def _format(self, texts: list[str]) -> list[str]:
+        """Prepend the instruction prefix (e.g. ``"query:"``) to every input."""
         if not self.prefix:
             return list(texts)
         return [f"{self.prefix}{t}" for t in texts]

@@ -37,6 +37,12 @@ __all__ = [
 
 @dataclass(frozen=True)
 class ConfusionCounts:
+    """Confusion-matrix counts, with "harmful" (label 1) as the positive class.
+
+    tp = harmful and blocked, fp = benign but blocked,
+    tn = benign and allowed,  fn = harmful but allowed.
+    """
+
     tp: int
     fp: int
     tn: int
@@ -57,6 +63,12 @@ class ConfusionCounts:
 
 @dataclass(frozen=True)
 class OperatingPoint:
+    """All headline metrics at one threshold.
+
+    ``recall`` is the true-positive rate (TPR), ``fpr`` the share of benign
+    prompts wrongly blocked, and ``youden_j = recall - fpr``.
+    """
+
     threshold: float
     accuracy: float
     precision: float
@@ -73,6 +85,7 @@ class OperatingPoint:
 
 
 def confusion_at(y_true: np.ndarray, scores: np.ndarray, threshold: float) -> ConfusionCounts:
+    """Count outcomes when every prompt with ``score >= threshold`` is blocked."""
     y_true = np.asarray(y_true).astype(int)
     pred = (np.asarray(scores) >= threshold).astype(int)
     return ConfusionCounts(
@@ -84,6 +97,10 @@ def confusion_at(y_true: np.ndarray, scores: np.ndarray, threshold: float) -> Co
 
 
 def operating_point(y_true: np.ndarray, scores: np.ndarray, threshold: float) -> OperatingPoint:
+    """Accuracy, precision, recall, F1, FPR and Youden's J at *threshold*.
+
+    Ratios with an empty denominator are reported as 0.0 instead of raising.
+    """
     c = confusion_at(y_true, scores, threshold)
     precision = c.tp / (c.tp + c.fp) if (c.tp + c.fp) else 0.0
     recall = c.tp / c.positives if c.positives else 0.0
@@ -127,6 +144,10 @@ def ppv_at_prevalence(tpr: float, fpr: float, prevalence: float) -> float:
     """Precision implied by an operating point at a given harmful prevalence.
 
     PPV(pi) = pi*TPR / (pi*TPR + (1-pi)*FPR)   -- Bayes' rule.
+
+    Example: the paper's operating point (TPR 0.959, FPR 0.062) gives a precision
+    of about 0.135 when only 1% of traffic is harmful (``prevalence=0.01``):
+    most blocked prompts would then be benign.
     """
     num = prevalence * tpr
     den = num + (1 - prevalence) * fpr
@@ -146,12 +167,20 @@ def expected_cascade_latency(
 
 
 def res(recall: float, latency_ms: float) -> float:
-    """Reflex Efficiency Score: recall-only. Maximised by blocking everything."""
+    """Reflex Efficiency Score: recall-only. Maximised by blocking everything.
+
+    RES = 100 * recall / log2(latency_ms + 1). Higher is better: more recall per
+    unit of (log) latency. Always report it next to :func:`res_j`.
+    """
     return recall * 100.0 / math.log2(latency_ms + 1.0)
 
 
 def res_j(tpr: float, fpr: float, latency_ms: float) -> float:
-    """False-positive-aware efficiency score using Youden's J = TPR - FPR."""
+    """False-positive-aware efficiency score using Youden's J = TPR - FPR.
+
+    RES_J = 100 * (TPR - FPR) / log2(latency_ms + 1). A classifier that blocks
+    everything has J = 0 and therefore RES_J = 0, which RES cannot show.
+    """
     return (tpr - fpr) * 100.0 / math.log2(latency_ms + 1.0)
 
 

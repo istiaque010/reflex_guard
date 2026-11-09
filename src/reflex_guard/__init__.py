@@ -1,6 +1,6 @@
 """Reflex-Guard: a low-latency embedding-based guardrail for LLM prompt safety.
 
-Reference implementation for the IEEE Access paper. See README.md.
+Reference implementation for the Reflex-Guard paper. See README.md.
 
 Quick start::
 
