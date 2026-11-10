@@ -49,3 +49,9 @@ The numbers printed in the article are in `results/paper_tables/` (Tables 4 to 8
 trained classifiers and raw outputs of the original runs behind Tables 4 to 7 were not
 preserved, so a fresh run is not expected to match them exactly. Table 8 is reproduced by
 `scripts/cpu_latency.py`; its raw output is in `results/cpu_latency/`.
+
+After a run, `python scripts/paper_tables.py --artifacts artifacts/ --data data/paper/` writes
+the run's results in the layout of Tables 4 to 7, at the paper's fixed thresholds (tau = 0.25 and
+the sensitive tau = 0.03), to `artifacts/paper_tables/`. Its `comparison.md` lists each value next
+to the value reported in the article. The script reports what the run measured; it does not
+adjust anything toward the article's values.

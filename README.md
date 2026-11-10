@@ -1,5 +1,7 @@
 # Reflex-Guard
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Code, data and reported results for **"Reflex-Guard: A Low-Latency Guardrail for LLM Prompt Safety Using Dense Semantic Embeddings"**.
 
 Reflex-Guard is a prompt guardrail that runs locally. A jailbreak-aware preprocessor decodes Base64 payloads and flags GCG-style suffixes and structural templates, a 33M-parameter BGE encoder (`BAAI/bge-small-en-v1.5`, CLS pooling, `query:` prefix) embeds the prompt, and a single lightweight binary classifier with a threshold decides whether to block it. No user text leaves the deployment.
@@ -97,6 +99,7 @@ python scripts/latency_bench.py --artifacts artifacts/      # latency on your ha
 python scripts/evaluate.py --artifacts artifacts/ --data data/paper/ \
        --latency artifacts/latency_results.json             # held-out metrics, prevalence analysis, RES / RES_J
 python scripts/attack_eval.py --artifacts artifacts/        # GCG-style, Base64 and DrAttack-style families
+python scripts/paper_tables.py --artifacts artifacts/ --data data/paper/  # Tables 4-7 in the article's layout
 python scripts/cpu_latency.py                               # the CPU measurement of Table 8
 ```
 
