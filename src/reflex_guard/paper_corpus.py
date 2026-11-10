@@ -111,6 +111,7 @@ def build_paper_corpus() -> pd.DataFrame:
 ROLE = {"Anthropic_RedTeam": "train", "AlpacaEval": "benign", "JailbreakHub_DAN": "eval",
         "JailbreakBench": "eval", "MultiJail_BN": "eval"}
 N_SEED = {"JailbreakBench": 100, "MultiJail_BN": 315}  # seed pools behind the resampled sources
+SOURCE_NAME = {"AlpacaEval": "Alpaca"}  # correct name for the mislabelled benign source
 
 
 def export_for_pipeline(csv_path: str | Path, out_dir: str | Path) -> pd.DataFrame:
@@ -120,11 +121,14 @@ def export_for_pipeline(csv_path: str | Path, out_dir: str | Path) -> pd.DataFra
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     src = pd.read_csv(csv_path, keep_default_na=False)
+    # The released CSV labels the benign prompts "AlpacaEval", an error in the original data
+    # script; they are Stanford Alpaca. The CSV keeps the old label so its SHA-256 still matches,
+    # and the pipeline uses the correct name.
     df = pd.DataFrame({"text": src["Goal"].astype(str), "label": src["label"].astype(int),
-                       "source": src["source"], "role": src["source"].map(ROLE)})
+                       "source": src["source"].replace(SOURCE_NAME), "role": src["source"].map(ROLE)})
     manifest = []
     for name, part in df.groupby("source", sort=False):
-        manifest.append({"source": name, "role": ROLE[name], "label": int(part["label"].iloc[0]),
+        manifest.append({"source": name, "role": part["role"].iloc[0], "label": int(part["label"].iloc[0]),
                          "requested": len(part), "obtained": len(part),
                          "augmented": name in N_SEED, "n_seed": N_SEED.get(name),
                          "notes": "released paper corpus; see data/corpus/DATASHEET.md"})

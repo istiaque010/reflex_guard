@@ -82,7 +82,7 @@ What is **not** here: the trained classifiers and raw evaluation outputs of the 
 ## Check the paper's numbers
 
 ```bash
-sha256sum -c data/corpus/SHA256SUMS                    # the corpus is the released file
+(cd data/corpus && sha256sum -c SHA256SUMS)           # the corpus is the released file
 python scripts/rebuild_paper_corpus.py                 # rebuild it from the public sources and compare
 ```
 

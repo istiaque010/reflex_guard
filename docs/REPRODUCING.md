@@ -10,7 +10,7 @@ without a GPU (Intel Core Ultra 7 270K Plus, 64 GB RAM). Seeds are fixed to 42.
 ## 1. Corpus
 
 The corpus behind the paper's tables is `data/corpus/reflexguard_corpus.csv`. Check it with
-`sha256sum -c data/corpus/SHA256SUMS`, and read `data/corpus/DATASHEET.md` for its sources
+`cd data/corpus && sha256sum -c SHA256SUMS`, and read `data/corpus/DATASHEET.md` for its sources
 and known issues. Convert it for the pipeline with
 
     python scripts/build_dataset.py --paper --out data/paper/
